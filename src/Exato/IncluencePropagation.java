@@ -30,6 +30,8 @@ public class IncluencePropagation {
 	public IloNumVar[] y;
 	IloCplex cplex;
 	
+	
+	
 	public void upload_graph(String arqThreshold, String arqMatrixAdj, String arqIncentives) {
 		FileReader arq;
 		BufferedReader reader;
@@ -96,6 +98,30 @@ public class IncluencePropagation {
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	public class LCC extends IloCplex.LazyConstraintCallback {
+
+		@Override
+		public void main() throws IloException {
+			int [][] valueoOfZ = new int[n][n];
+			for (int i = 0; i < n; i++) {
+				for (int j = 0; j < n; j++) {
+					valueoOfZ[i][j] = (int) getValue(z[i][j]);
+				}
+			}
+
+			System.out.println("teste");
+
+			ArrayList<IloRange> restricoes = makeCuts(valueoOfZ);
+			if (restricoes.size() > 0) {
+				for (IloRange r : restricoes) {
+					System.out.println("restricao add" + r.toString());
+					add(r, 0);
+				}
+			}
+
 		}
 	}
 
@@ -192,7 +218,7 @@ public class IncluencePropagation {
 		}
 				
 		// chamando callback
-		//cplex.use(new LCC());
+		cplex.use(new LCC());
 	
 		cplex.addMinimize(objective);
 		
@@ -266,29 +292,7 @@ public class IncluencePropagation {
 	
 	}
 	
-	public class LCC extends IloCplex.LazyConstraintCallback {
-
-		@Override
-		public void main() throws IloException {
-			int [][] valueoOfZ = new int[n][n];
-			for (int i = 0; i < n; i++) {
-				for (int j = 0; j < n; j++) {
-					valueoOfZ[i][j] = (int) getValue(z[i][j]);
-				}
-			}
-
-			// System.out.println("teste");
-
-			ArrayList<IloRange> restricoes = makeCuts(valueoOfZ);
-			if (restricoes.size() > 0) {
-				for (IloRange r : restricoes) {
-					// System.out.println("restricao add" + r.toString());
-					add(r, 0);
-				}
-			}
-
-		}
-	}
+	
 	
 	public ArrayList<IloRange> makeCuts(int[][] matrix) throws IloException {
 		ArrayList<IloRange> cuts = new ArrayList<IloRange>();
