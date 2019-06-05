@@ -221,7 +221,8 @@ public class InfluencePropagation {
 			selected[i] = false;
 		}
 		
-		
+		//System.out.println("ANTES -"+useIncentives);
+
 		
 		for (int i = 0; i < incentivesUseds.size(); i++) {
 			int auxNode = incentivesUseds.get(i).node;
@@ -229,7 +230,7 @@ public class InfluencePropagation {
 			Incentives incent = incentivesUseds.get(i);
 			
 			for (int j = 0; j < matrixAdj.length; j++) { //verificar quais os nós q auxNode faz ligação
-				System.out.println("="+auxNode);
+				
 				if(j!=auxNode && matrixAdj[auxNode][j]!= 0 && !selected[j]) {
 					double costAux = 0;
 					Incentives incentAux = null;
@@ -242,41 +243,43 @@ public class InfluencePropagation {
 					
 					double auxBenefit2 = calcBenefit(j, incentivesUseds.get(i).cost);// Calc seu beneficio
 					
-					if(auxBenefit2 > auxBenefit ) { //fzr a substituição para um nó com maior custo beneficio
-						System.out.println("Substituiu "+auxNode+" por "+j+ " ---> Incentive-> "+incentAux.incentive + " |Cost-> "+incentAux.cost+ " |Node-> "+incentAux.node);
-						auxBenefit = auxBenefit2;
-						selected[j] = true;
-						selected[auxNode] = false;
-						auxNode = j;
-						incent = incentAux;
-
-					}else { // Depende da probabilidade para aceitar um nó com menor custo beneficio
-						double auxProb = Math.random();
-						if(auxProb <= prob && costAux != 0) {
-							System.out.println("Obrigou  "+auxNode+" por "+j + " --->Incentive-> "+incentAux.incentive + " |Cost-> "+incentAux.cost+ " |Node-> "+incentAux.node);
+					
+						if(auxBenefit2 > auxBenefit && !incentivesUsed[incent.id]) { //fzr a substituição para um nó com maior custo beneficio
+							
 							auxBenefit = auxBenefit2;
 							selected[j] = true;
 							selected[auxNode] = false;
 							auxNode = j;
-						}		
-					}
-						
+							incent = incentAux;
+	
+						}else { // Depende da probabilidade para aceitar um nó com menor custo beneficio
+							double auxProb = Math.random();
+							if(auxProb <= prob && costAux != 0) {
+								
+								auxBenefit = auxBenefit2;
+								selected[j] = true;
+								selected[auxNode] = false;
+								auxNode = j;
+							}		
+						}
+					
 				}
 			}
-		
-			totalCost = totalCost + incent.cost;
-			useIncentives.add(incent);
-			incentivesUsed[incent.id] = true;					
-			incentivesIn[incent.node] = incentivesIn[incent.node]+incent.incentive;
 			
+			if(!incentivesUsed[incent.id]) {
+				totalCost = totalCost + incent.cost;
+				useIncentives.add(incent);
+				incentivesUsed[incent.id] = true;					
+				incentivesIn[incent.node] = incentivesIn[incent.node]+incent.incentive;
+			}
 		}
 		
-		System.out.println("III");
+		
 		for (int i = 0; i < useIncentives.size(); i++) {
-			System.out.println("Incentive-> "+useIncentives.get(i).incentive + " |Cost-> "+useIncentives.get(i).cost+ " |Node-> "+useIncentives.get(i).node);
 			propagationProcess(useIncentives.get(i).node);
 		}
-
+		
+		
 		//Continuar com o processo de ativação dos nós 
 		while(totalActiveNodes < (n*alpha)) {	
 			Incentives incent = incentivesAux.pop();
@@ -333,26 +336,20 @@ public class InfluencePropagation {
 		for(int zzz=0; zzz<100; zzz++) {
 			
 			newCostAux = newSoluction(incentivesAux, prob);
-			System.out.println("");
-			System.out.println("---------------------------------------------");
-			System.out.println("");
-			System.out.println("totalActiveNodes "+totalActiveNodes);
-			for (int i = 0; i < useIncentives.size(); i++) {
-				System.out.println("ID "+useIncentives.get(i).id+" - Custo de: "+useIncentives.get(i).cost+"    - Incentivo de: "+useIncentives.get(i).incentive+ "   - No "+useIncentives.get(i).node);
-			}
 			
-			System.out.println("Custo novo: "+newCostAux);
-			
-			System.out.println(" ");
-			
-			if(newCostAux < auxCost || prob >= 1) {
+			double auxProb = Math.random();
+		
+			if(newCostAux < auxCost ||auxProb <= prob ) {
 				
 				auxCost = newCostAux;
 				incentivesAux = new ArrayList<Incentives>();
+				System.out.println("Seleciona nova solução, custo: "+auxCost);
+				System.out.println(auxProb+" - "+prob);
 				for (int i = 0; i < useIncentives.size(); i++) {
+					System.out.println("ID "+useIncentives.get(i).id+" - Custo de: "+useIncentives.get(i).cost+"    - Incentivo de: "+useIncentives.get(i).incentive+ "   - No "+useIncentives.get(i).node);
 					incentivesAux.add(useIncentives.get(i));
 				}
-				
+				System.out.println("  ");
 				
 				prob = 0.0;
 			}else {
