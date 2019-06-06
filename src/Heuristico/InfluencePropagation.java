@@ -332,6 +332,16 @@ public class InfluencePropagation {
 		
 		double prob = 0.2;
 		double newCostAux = 0;
+		System.out.println("");
+		System.out.println("OLD SOLUTION");
+		System.out.println("Cost-> "+auxCost);
+		System.out.println("Incentives Used: ");
+		for (int i = 0; i < incentivesAux.size(); i++) {
+			System.out.println(" ID-> "+incentivesAux.get(i).id+" - Custo de: "+incentivesAux.get(i).cost+"    - Incentivo de: "+incentivesAux.get(i).incentive+ "   - No "+incentivesAux.get(i).node);
+		
+		}
+		System.out.println("totalActiveNodes-> "+totalActiveNodes);
+
 		
 		for(int zzz=0; zzz<100; zzz++) {
 			
@@ -342,15 +352,10 @@ public class InfluencePropagation {
 			if(newCostAux < auxCost ||auxProb <= prob ) {
 				
 				auxCost = newCostAux;
-				incentivesAux = new ArrayList<Incentives>();
-				System.out.println("Seleciona nova solução, custo: "+auxCost);
-				System.out.println(auxProb+" - "+prob);
+				incentivesAux = new ArrayList<Incentives>();	
 				for (int i = 0; i < useIncentives.size(); i++) {
-					System.out.println("ID "+useIncentives.get(i).id+" - Custo de: "+useIncentives.get(i).cost+"    - Incentivo de: "+useIncentives.get(i).incentive+ "   - No "+useIncentives.get(i).node);
 					incentivesAux.add(useIncentives.get(i));
 				}
-				System.out.println("  ");
-				
 				prob = 0.0;
 			}else {
 				for (int i = 0; i < n; i++) {
@@ -364,14 +369,15 @@ public class InfluencePropagation {
 				prob = prob + 0.1;	
 			}
 		}
-		
 		System.out.println("");
-		System.out.println("totalActiveNodes "+totalActiveNodes);
+		System.out.println("NEW SOLUTION");
+		System.out.println("Cost-> "+auxCost);
+		System.out.println("Incentives Used: ");
 		for (int i = 0; i < incentivesAux.size(); i++) {
-			System.out.println("ID "+incentivesAux.get(i).id+" - Custo de: "+incentivesAux.get(i).cost+"    - Incentivo de: "+incentivesAux.get(i).incentive+ "   - No "+incentivesAux.get(i).node);
+			System.out.println(" ID "+incentivesAux.get(i).id+" - Custo de: "+incentivesAux.get(i).cost+"    - Incentivo de: "+incentivesAux.get(i).incentive+ "   - No "+incentivesAux.get(i).node);
 		}
 		
-		System.out.println("Custo final: "+newCostAux);
+		System.out.println("totalActiveNodes-> "+totalActiveNodes);
 	}
 	
 	public void propagationProcess(int i) {
