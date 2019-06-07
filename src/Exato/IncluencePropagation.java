@@ -100,32 +100,6 @@ public class IncluencePropagation {
 			e.printStackTrace();
 		}
 	}
-	
-	public class LCC extends IloCplex.LazyConstraintCallback {
-
-		@Override
-		public void main() throws IloException {
-			int [][] valueoOfZ = new int[n][n];
-			for (int i = 0; i < n; i++) {
-				for (int j = 0; j < n; j++) {
-					if(matrixAdj[i][j]!=0 && i!=j) {
-						valueoOfZ[i][j] = (int) getValue(z[i][j]);
-					}
-				}
-			}
-
-			System.out.println("teste");
-
-			ArrayList<IloRange> restricoes = makeCuts(valueoOfZ);
-			if (restricoes.size() > 0) {
-				for (IloRange r : restricoes) {
-					System.out.println("restricao add" + r.toString());
-					add(r, 0);
-				}
-			}
-
-		}
-	}
 
 	public void model() throws IloException {
 		cplex = new IloCplex();
@@ -221,6 +195,7 @@ public class IncluencePropagation {
 				
 		// chamando callback
 		cplex.use(new LCC());
+
 	
 		cplex.addMinimize(objective);
 		
@@ -293,53 +268,75 @@ public class IncluencePropagation {
 		
 	
 	}
+		
+	public class LCC extends IloCplex.LazyConstraintCallback {
+
+		@Override
+		public void main() throws IloException {
+			int [][] valueoOfZ = new int[n][n];
+			int [] valueoOfY = new int[n];
+			for (int i = 0; i < n; i++) {
+				valueoOfY[i] = (int) getValue(y[i]);
+				
+				for (int j = 0; j < n; j++) {
+					if(matrixAdj[i][j]!=0 && i!=j) {
+						valueoOfZ[i][j] = (int) getValue(z[i][j]);
+					}
+				}
+			}
+
+			ArrayList<IloRange> restricoes = makeCuts(valueoOfZ, valueoOfY);
+			System.out.println("COLOCAR RESTRIÇÔES");
+			if (restricoes.size() > 0) {
+				for (IloRange r : restricoes) {
+					System.out.println("restricao add" + r.toString());
+					//add(r, 0);
+				}
+			}
+
+		}
+	}
 	
-	
-	
-	public ArrayList<IloRange> makeCuts(int[][] matrix) throws IloException {
+	public ArrayList<IloRange> makeCuts(int[][] matrix, int[] actives) throws IloException {
 		ArrayList<IloRange> cuts = new ArrayList<IloRange>();
 		
 		for (int i = 0; i < n; i++) {
-			ArrayList<Integer> cicle = dfs(i);
-			if(!cicle.isEmpty()) {
-				for (int j = 0; j < cicle.size(); j++) {
-					System.out.println(cicle.get(i));
-				}
-				
-			}
-			
-			/*
-			if(!cicles.isEmpty()) {
-				for (int j = 0; j < cicles.size(); j++) {
-					Stack c = cicles.get(j);
-					System.out.println("O CICLO EM "+i+":");
-					for (int k = 0; k < c.size(); k++) {
+			if(actives[i] != 0) {
+				Stack<Integer> cicle = dfs(i, matrix);
+				if(!cicle.isEmpty()) {
+					
+					for (int j = cicle.size()-1; j >= 0; j--) {
+						//System.out.println(cicle.get(j));
 						IloLinearNumExpr constraints1 = cplex.linearNumExpr();
-						for (int i2 = 0; i2 < c.size()-1; i2++) {
-							constraints1.addTerm(1,z[(int) c.get(i2)][(int) c.get(i2)+1]);
-						}
-						constraints1.addTerm(1,z[(int) c.lastElement()][(int) c.firstElement()]);
-						
-						
-						for (int i2 = 0; i2 < c.size(); i2++) {
-							if((int) c.get(i2) != k) {
-								constraints1.addTerm(-1,y[(int) c.get(i2)]);
+						//System.out.println(' ');
+						//System.out.println(y[(int) cicle.get(j)]);
+						for (int k = cicle.size()-1; k >= 0; k--) {				
+							if(k!=j) {
+								//System.out.println(y[(int) cicle.get(k)]);
+								constraints1.addTerm(-1, y[(int) cicle.get(k)]);
 							}
 							
+							if(k >= 1) {
+								//System.out.println(z[(int) cicle.get(k)][(int) cicle.get(k-1)]);
+								constraints1.addTerm(1,z[(int) cicle.get(k)][(int) cicle.get(k-1)]);
+							}else {
+								//System.out.println(z[(int) cicle.firstElement()][(int) cicle.lastElement()]);
+								constraints1.addTerm(1,z[(int) cicle.firstElement()][(int) cicle.lastElement()]);
+							}
 						}
-							
+						//System.out.println(constraints1);
 						cuts.add(cplex.addLe(constraints1, 0));
-
 					}
-				}					
-			}*/
+					return cuts;
+				}
+			}
 		}
 		return cuts;
 	}
 	
-	public ArrayList<Integer> dfs(int v) {
+	public Stack<Integer> dfs(int v, int[][] matrix) {
 		Stack<Integer> stack = new Stack<Integer>();
-		ArrayList<Integer> cicle = new ArrayList<Integer>();
+		Stack<Integer> cicle = new Stack<Integer>();
 		boolean[] visited = new boolean[n];
 		boolean[] in_stack = new boolean[n];
 		
@@ -358,13 +355,14 @@ public class IncluencePropagation {
 				
 			}
 			int auxJ = 0;
-			for (int j = 0; j < matrixAdj.length; j++) {
-				if(j!=v && j==0) {
+			for (int j = 0; j < matrix.length; j++) {
+				if(j!=v && matrix[v][j]!=0) {
 					if(in_stack[j]) {
 						
 						int aux = stack.pop();
+						cicle.push(j);
 						while(aux!= j ) {
-							cicle.add(aux);
+							cicle.push(aux);
 							aux = stack.pop();
 						}
 						
@@ -395,9 +393,9 @@ public class IncluencePropagation {
 	public static void main(String[] args) {
 		IncluencePropagation m = new IncluencePropagation();
 		
-		String matrix_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Exato\\Instancias\\Graph.txt";
-		String icent_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Exato\\Instancias\\Incentives.txt";
-		String thresh_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Exato\\Instancias\\Thresholds.txt";
+		String matrix_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Instances\\50_V\\Graph1\\Graph.txt";
+		String icent_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Instances\\50_V\\Graph1\\Incentives.txt";
+		String thresh_arq = "C:\\Users\\rafae\\Documents\\Facul\\TCC\\Codgos\\Instances\\50_V\\Graph1\\Thresholds.txt";
 		m.upload_graph(thresh_arq, matrix_arq,icent_arq);
 		try {
 			m.model();
