@@ -108,7 +108,9 @@ public class IncluencePropagation {
 			int [][] valueoOfZ = new int[n][n];
 			for (int i = 0; i < n; i++) {
 				for (int j = 0; j < n; j++) {
-					valueoOfZ[i][j] = (int) getValue(z[i][j]);
+					if(matrixAdj[i][j]!=0 && i!=j) {
+						valueoOfZ[i][j] = (int) getValue(z[i][j]);
+					}
 				}
 			}
 
@@ -298,8 +300,15 @@ public class IncluencePropagation {
 		ArrayList<IloRange> cuts = new ArrayList<IloRange>();
 		
 		for (int i = 0; i < n; i++) {
-			ArrayList<Stack> cicles = dfs(i,matrix);
+			ArrayList<Integer> cicle = dfs(i);
+			if(!cicle.isEmpty()) {
+				for (int j = 0; j < cicle.size(); j++) {
+					System.out.println(cicle.get(i));
+				}
+				
+			}
 			
+			/*
 			if(!cicles.isEmpty()) {
 				for (int j = 0; j < cicles.size(); j++) {
 					Stack c = cicles.get(j);
@@ -323,111 +332,63 @@ public class IncluencePropagation {
 
 					}
 				}					
-			}
+			}*/
 		}
 		return cuts;
 	}
 	
-	public ArrayList<Stack> dfs(int v, int[][]matrixAdj	) {
-		Stack stack = new Stack();
-		Stack newCicle; 
-		ArrayList<Stack> cicles = new ArrayList<Stack>();
-		int matrixAux[][] = new int[n][n];
-		
-		for (int i = 0; i < matrixAux.length; i++) {
-			for (int j = 0; j < matrixAux.length; j++) {
-				matrixAux[i][j] = matrixAdj[i][j];
-				//System.out.println("["+i+" , "+j+"] = "+matrixAux[i][j]);
-			}
-		}
-		
-		boolean[] visitated = new boolean[n];
+	public ArrayList<Integer> dfs(int v) {
+		Stack<Integer> stack = new Stack<Integer>();
+		ArrayList<Integer> cicle = new ArrayList<Integer>();
+		boolean[] visited = new boolean[n];
 		boolean[] in_stack = new boolean[n];
 		
 		for (int i = 0; i < n; i++) {
-			visitated[i] = false;
-			in_stack[i] = false;			
+			visited[i] = false;
+			in_stack[i] = false;
 		}
-		
-		boolean find_neigbhor;
-		boolean find_cicle;
-		stack.push(v);
-		in_stack[v] = true;
 		
 		while(true) {
-			find_neigbhor = false;
-			find_cicle = false;
+			boolean find = false;
 			
-			if(stack.size() <=0 ) {
-				//System.out.println("Pilha Vazia");
-				break;
+			if(!visited[v]) {
+				stack.push(v);
+				visited[v] = true;
+				in_stack[v] = true;
+				
 			}
-			
-			
-			v = (int)stack.lastElement();
-			
-            int countTotal = 0;
-            int countOff = 0;
-			int j;
-			for (j = 0; j < n; j++) {
-				if(matrixAux[v][j] != 0) {
-					countTotal++;
-					if(!in_stack[j]) {
-						countOff++;
+			int auxJ = 0;
+			for (int j = 0; j < matrixAdj.length; j++) {
+				if(j!=v && j==0) {
+					if(in_stack[j]) {
 						
-						if(!visitated[j]) {
-							//System.out.println("ADD: "+j);
-							find_neigbhor = true;
-							break;
-						}
-						//ystem.out.println("Ja foi visto: "+j);
-						
-					}else {
-						//System.out.println("Achou o cilco ao tentar add"+ j+" :");
-						find_cicle = true;
-						newCicle = new Stack();
-						
-						for(int i = 0; i < in_stack.length; i++) {
-							int aux = (int)stack.pop();
-							in_stack[aux] = false;
-							//System.out.print(" - "+aux);
-							newCicle.push(aux);
-							
-							if(aux == j) {
-								int start = (int) newCicle.firstElement();
-								int last = (int) newCicle.lastElement();
-								matrixAux[start][last] = 0;		
-								
-								cicles.add(newCicle);
-								break;
-							}
+						int aux = stack.pop();
+						while(aux!= j ) {
+							cicle.add(aux);
+							aux = stack.pop();
 						}
 						
+						return cicle;						
+					}else if(!visited[j]) {
+						find = true;
+						auxJ = j;
+						break;
 					}
-				}
-				if(find_cicle) {
-					break;
-				}
+				}			
 			}
-
 			
-			if(find_neigbhor || find_cicle) {
-				stack.push(j);
-				in_stack[j] = true;
-			}else {
-
-				//System.out.println("Remove "+v);
-				if(stack.size()>0) {
-					visitated[v] = true;
-					stack.pop();
-					in_stack[v] = false;
-					visitated[v] = true;
-				}else {
+			if(!find) {
+				in_stack[stack.lastElement()] = false;
+				stack.pop();
+				if(stack.empty()) {
 					break;
 				}
+				v = stack.lastElement();
+			}else {
+				v = auxJ;
 			}
 		}
-		return cicles;
+		return cicle;
 		
 	}
 			
