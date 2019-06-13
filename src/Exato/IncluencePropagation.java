@@ -290,9 +290,10 @@ public class IncluencePropagation {
 			if (restricoes.size() > 0) {
 				for (IloRange r : restricoes) {
 					System.out.println("restricao add" + r.toString());
-					//add(r, 0);
+					add(r, 0);
 				}
 			}
+			System.out.println("TERMINOU");
 
 		}
 	}
