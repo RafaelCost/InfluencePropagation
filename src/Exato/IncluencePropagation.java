@@ -293,7 +293,7 @@ public class IncluencePropagation {
 					add(r, 0);
 				}
 			}
-			System.out.println("TERMINOU");
+			System.out.println();
 
 		}
 	}
@@ -326,7 +326,7 @@ public class IncluencePropagation {
 							}
 						}
 						//System.out.println(constraints1);
-						cuts.add(cplex.addLe(constraints1, 0));
+						cuts.add(cplex.le(constraints1, 0));
 					}
 					return cuts;
 				}
